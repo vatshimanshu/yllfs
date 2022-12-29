@@ -21,6 +21,16 @@ struct inode {
     int indirect;
 };
 
+#define NUM_INODES (int)(BLOCK_SIZE * NUM_INODE_BLOCKS) / sizeof(struct inode)
+
+struct inode_bitmap {
+    char bitmap[NUM_INODES];
+};
+
+struct data_bitmap {
+    char bitmap[NUM_BLOCKS];
+};
+
 struct block {
     char data[BLOCK_SIZE];
 };

@@ -10,7 +10,7 @@ struct super_block __init_super_block()
     sb.block_size = BLOCK_SIZE;
     sb.num_blocks = NUM_BLOCKS;
     sb.num_inode_blocks = NUM_INODE_BLOCKS;
-    sb.num_inodes = (int)(BLOCK_SIZE * NUM_INODE_BLOCKS) / sizeof(struct inode);
+    sb.num_inodes = NUM_INODES;
 
     return sb;
 }
@@ -26,7 +26,20 @@ void create_fs(char *vdisk)
     struct super_block sb = __init_super_block();
     fwrite(&sb, sizeof(struct super_block), 1, fptr);
     
-    // TODO: ADD bitmap for inodes and blocks
+    struct inode_bitmap imap;
+    for (int i = 0; i < sb.num_inodes; i++)
+    {
+        imap.bitmap[i] = 'E';
+    }
+    fwrite(&imap, sizeof(struct inode_bitmap), 1, fptr);
+
+    struct data_bitmap dmap;
+    for (int i = 0; i < sb.num_blocks; i++)
+    {
+        dmap.bitmap[i] = 'E';
+    }
+    fwrite(&dmap, sizeof(struct data_bitmap), 1, fptr);
+
     // TODO: write inode entry for root directory along with directory content
 
     // write inode blocks to vdisk
@@ -37,7 +50,7 @@ void create_fs(char *vdisk)
 
     // write data blocks
     char data[sb.block_size];
-    data[0] = 'B';
+    data[0] = 'M';
     for (int i = 0; i < sb.num_blocks; i++)
     {
         fwrite(&data, sizeof(data), 1, fptr);
@@ -76,6 +89,8 @@ void read_first_byte_blocks(char *vdisk)
 
     // move the cursor to first block
     fseek(fptr, sizeof(struct super_block), SEEK_CUR);
+    fseek(fptr, sizeof(struct inode_bitmap), SEEK_CUR);
+    fseek(fptr, sizeof(struct data_bitmap), SEEK_CUR);
     fseek(fptr, superBlock.num_inodes * sizeof(struct inode), SEEK_CUR);
 
     // read the blocks
